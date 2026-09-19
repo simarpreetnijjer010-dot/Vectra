@@ -1,0 +1,103 @@
+""" Week 1 of my Camera tracking movement idea
+Plan is to for this week is that it opens my webcam, displays the video feed it is recording, tracks each frame, mouse position, and draws shapes on camera feed
+For shapes I was planning it to be like a square following my hand movements
+"""
+
+import cv2
+import numpy as np
+
+# first i need to actually have control of the mouse
+
+mouse_position = [0, 0]  # initialize mouse position
+
+def on_mouse_move(event, x, y, flags, param):
+    global mouse_position
+    if event == cv2.EVENT_MOUSEMOVE:
+        mouse_position[0] = x
+        mouse_position[1] = y
+# not sure how this works but ill will figure it out later, this is based off previous examples i have seen
+
+
+def main():
+    camera_index = 0
+    cap = cv2.VideoCapture(camera_index)
+
+    if not cap.isOpened():
+        print("Error: Web cam cannot be opened")
+        print("check if it is connected")
+        return
+    # this is used to open the webcam
+
+    window_name = "Week 1 - Camera Basics"
+    cv2.namedWindow(window_name)
+    cv2.setMouseCallback(window_name, on_mouse_move)
+    print("Camera opened. Press 'q' in the video window to quit.")
+
+    while True:
+        ret, frame = cap.read()
+        # cap.read() grabs the next available frame from the camera.
+        # ret -True if a frame was successfully captured, False if not
+        # frame -the actual image, as a NumPy array of BGR pixel values
+
+        if not ret:
+            print("Error: Failed to read frame from webcam")
+            continue
+
+        # flip the frame horizontally for a mirror effect
+        # basically means that if i move my hand to the right, itll move to the right on the screen too
+        frame = cv2.flip(frame, 1)
+
+        # now we need to add the shapes to the frame that follows my hand
+        # A rectangle: (image, top_left, bottom_right, color_BGR, thickness) format
+        cv2.rectangle(frame, (50, 50), (250, 150), (0, 255, 0), 2)
+
+        # A circle: (image, center_coordinates, radius, color_BGR, thickness) format
+        cv2.circle(frame, (400, 100), 40, (255, 0, 0), -1)
+
+        # now a line: (image, start_point, end_point, color_BGR, thickness) format
+        cv2.line(frame, (50, 200), (400, 200), (0, 0, 255), 2)
+
+        # we need to now draw a circle that follows the mouse position, which is stored in the global variable mouse_position
+        # so we can use that to draw a circle at the mouse position
+        mx, my = mouse_position
+        cv2.circle(frame, (mx, my), 15, (0, 255, 255), 2)
+
+        # making sure the text is visible on the frame, so that the user can see the mouse position
+        # if the coordinates work, then week 1 should be complete and move on to week 2 of my plan
+        cv2.putText(
+            frame,
+            f"Mouse: ({mx}, {my})",
+            (10, frame.shape[0] - 20),   # bottom-left corner of the text
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2,
+        )
+
+        # Show the frame's pixel dimensions too, since "images and
+        # pixels" is something important to do first week in my plan, so that i can understand how to work with images and pixels in the future
+        height, width = frame.shape[:2]
+        cv2.putText(
+            frame,
+            f"Frame size: {width}x{height}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2,
+        )
+
+        # Actually display the frame in the window we created.
+        cv2.imshow(window_name, frame)
+
+        # wait 1 ms and check if the user pressed 'q' to quit
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # creating a cleanup just so theres no clutter
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
